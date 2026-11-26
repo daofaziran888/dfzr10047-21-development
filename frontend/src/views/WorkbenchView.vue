@@ -60,6 +60,14 @@
             >
               {{ action }}
             </button>
+            <RouterLink
+              v-if="detailLink(row)"
+              class="link"
+              :to="detailLink(row)!"
+              :data-testid="`detail-${row.id}`"
+            >
+              {{ detailLabel }}
+            </RouterLink>
           </td>
         </tr>
         <tr v-if="!rows.length">
@@ -129,6 +137,27 @@ const statusSummary = computed(() =>
     count: rows.value.filter((row) => String(row.status) === status).length,
   })),
 )
+
+// 坏行隔离与解析指标行内提供审批入口：从隔离行看对账，从回补对账回原行。
+const detailLabel = computed(() => {
+  if (meta.key === 'row_quarantine') return '回补对账详情'
+  if (meta.key === 'reinstate_ledger') return '回到原行'
+  if (meta.key === 'parse_metric') return '读数详情'
+  return ''
+})
+
+function detailLink(row: EntryRow): string | null {
+  if (meta.key === 'reinstate_ledger' && row['关联隔离编号']) {
+    return `/ledger/${encodeURIComponent(String(row['关联隔离编号']))}`
+  }
+  if (meta.key === 'row_quarantine' && row['隔离编号']) {
+    return `/ledger/${encodeURIComponent(String(row['隔离编号']))}`
+  }
+  if (meta.key === 'parse_metric' && row['指标读数编号']) {
+    return `/readings/${encodeURIComponent(String(row['指标读数编号']))}`
+  }
+  return null
+}
 
 function resetFilters() {
   filters.value = {}
